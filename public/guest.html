@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>OYO Guest Chat</title>
+  <style>
+    body { font-family: system-ui; max-width: 860px; margin: 40px auto; }
+    #wrap { display: grid; gap: 14px; }
+    .row { display:flex; gap:10px; align-items:center; }
+    select, input { padding: 10px; font-size: 14px; }
+    #log { border:1px solid #ddd; min-height: 420px; padding: 12px; white-space: pre-wrap; }
+    button { padding: 10px 14px; font-size: 14px; cursor: pointer; }
+    .muted { color:#666; }
+  </style>
+</head>
+<body>
+  <h2>OYO Night Emergency Chat (Guest)</h2>
+
+  <div id="wrap">
+    <div class="row">
+      <label>지점</label>
+      <select id="branch">
+        <option value="OYO1">OYO1</option>
+        <option value="OYO2">OYO2</option>
+        <option value="OYO3">OYO3</option>
+        <option value="OYODDM">OYODDM</option>
+        <option value="OYOROOFTOP">OYOROOFTOP</option>
+        <option value="OYO6">OYO6</option>
+      </select>
+
+      <label>닉네임</label>
+      <input id="nickname" placeholder="닉네임 입력" />
+
+      <button id="enter">입장</button>
+      <span class="muted" id="status"></span>
+    </div>
+
+    <div id="log"></div>
+
+    <div class="row">
+      <input id="message" style="flex:1" placeholder="메시지 입력 후 Enter" />
+      <button id="send">전송</button>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/guest.js"></script>
+</body>
+</html>
