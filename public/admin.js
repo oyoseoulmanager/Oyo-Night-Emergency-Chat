@@ -1,119 +1,113 @@
 const socket = io();
 
-const roomsEl = document.getElementById("rooms");
+const roomSelect = document.getElementById("roomSelect");
+const enterRoomBtn = document.getElementById("enterRoomBtn");
+const currentRoomEl = document.getElementById("currentRoom");
+const roomCountEl = document.getElementById("roomCount");
+const systemMsgEl = document.getElementById("systemMsg");
+
 const logEl = document.getElementById("log");
-const titleEl = document.getElementById("title");
 const msgEl = document.getElementById("message");
-const sendBtn = document.getElementById("send");
-const endBtn = document.getElementById("endRoom");
-const delBtn = document.getElementById("deleteRoom");
+const sendBtn = document.getElementById("sendBtn");
 
-const MANAGER_NAME = "OYO Night Manager";
+const ADMIN_NAME = "OYO Night Manager";
 
-let activeRoomId = null;
-let roomCache = []; // 목록 캐시
+let selectedRoomId = "";
 
-function addLine(text) {
-  logEl.textContent += text + "\n";
+function appendLine(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  logEl.appendChild(div);
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-function renderRooms(list) {
-  roomCache = list || [];
-  roomsEl.innerHTML = "";
+function fmtTime(d) {
+  try {
+    return new Date(d).toLocaleTimeString();
+  } catch {
+    return "";
+  }
+}
 
-  if (roomCache.length === 0) {
-    roomsEl.innerHTML = `<div class="muted">현재 접속자가 없습니다.</div>`;
+// Connect as admin
+socket.emit("join:admin");
+
+socket.on("admin:system", ({ text }) => {
+  systemMsgEl.textContent = text || "";
+});
+
+socket.on("rooms:update", ({ rooms }) => {
+  const list = rooms || [];
+  roomCountEl.textContent = `${list.length} room(s)`;
+
+  const prev = roomSelect.value;
+
+  roomSelect.innerHTML = `<option value="">-- Select a room --</option>`;
+  list
+    .sort((a, b) => new Date(b.lastActiveAt) - new Date(a.lastActiveAt))
+    .forEach((r) => {
+      const label = `${r.branch} / ${r.nickname}  (${new Date(r.lastActiveAt).toLocaleTimeString()})`;
+      const opt = document.createElement("option");
+      opt.value = r.roomId;
+      opt.textContent = label;
+      roomSelect.appendChild(opt);
+    });
+
+  // keep selection if still exists
+  if (prev) roomSelect.value = prev;
+});
+
+enterRoomBtn.addEventListener("click", () => {
+  const roomId = roomSelect.value;
+  if (!roomId) {
+    systemMsgEl.textContent = "Please select a room first.";
     return;
   }
+  socket.emit("admin:selectRoom", { roomId });
+});
 
-  for (const r of roomCache) {
-    const div = document.createElement("div");
-    div.className = "room" + (r.roomId === activeRoomId ? " active" : "");
-    const t = new Date(r.createdAt).toLocaleTimeString();
-    div.innerHTML = `
-      <div><b>${r.guestName}</b> <span class="muted">(${r.branch})</span> ${r.closed ? "✅종료됨" : ""}</div>
-      <div class="muted">접속 ${t} · 메시지 ${r.count}개</div>
-      <div class="muted">${r.lastPreview || ""}</div>
-    `;
-    div.onclick = () => enterRoom(r.roomId);
-    roomsEl.appendChild(div);
+socket.on("admin:selectedRoom", ({ roomId }) => {
+  selectedRoomId = roomId;
+  currentRoomEl.textContent = `Current room: ${roomId}`;
+  systemMsgEl.textContent = "Room opened. Loading history...";
+});
+
+socket.on("chat:history", (history) => {
+  logEl.innerHTML = "";
+  if (!history || history.length === 0) {
+    appendLine("[System] No previous messages for this room.");
+    return;
   }
-}
-
-function enterRoom(roomId) {
-  activeRoomId = roomId;
-  socket.emit("admin:enter_room", { roomId });
-}
-
-socket.emit("admin:hello");
-
-socket.on("admin:room_list", (list) => {
-  renderRooms(list);
+  history.forEach((m) => {
+    appendLine(`[${fmtTime(m.sentAt)}] ${m.senderName}: ${m.message}`);
+  });
 });
 
-socket.on("admin:room_updated", ({ roomId, list }) => {
-  renderRooms(list);
-  // 보고 있는 방이면 새 메시지는 room:message 이벤트로 로그에 찍힘
+socket.on("admin:message", (m) => {
+  // Only show messages for currently selected room
+  if (!selectedRoomId || m.roomId !== selectedRoomId) return;
+  appendLine(`[${fmtTime(m.sentAt)}] ${m.senderName}: ${m.message}`);
 });
 
-socket.on("admin:room_entered", (data) => {
-  titleEl.textContent = `${data.guestName} (${data.branch}) — ${MANAGER_NAME}`;
-  logEl.textContent = "";
-
-  if (data.messages.length === 0) {
-    addLine("--- 대화 기록 없음 ---");
-  } else {
-    for (const m of data.messages) {
-      const t = new Date(m.ts).toLocaleTimeString();
-      const who = m.from === "manager" ? MANAGER_NAME : data.guestName;
-      addLine(`[${t}] ${who}: ${m.text}`);
-    }
+function sendAdminMessage() {
+  if (!selectedRoomId) {
+    systemMsgEl.textContent = "Select and open a room first.";
+    return;
   }
-
-  if (data.closed) addLine("--- 이 방은 종료된 상태입니다 ---");
-});
-
-socket.on("admin:error", ({ message }) => alert(message));
-
-socket.on("room:message", ({ roomId, msg, guestName }) => {
-  // 관리자 화면은 모든 room 메시지를 받지 않음.
-  // (하지만, 우리가 room으로 emit 했기 때문에 admin은 room에 join하지 않음 -> 여기 안 옴)
-  // 혹시 추후 admin이 join 하도록 바꾸면 아래 조건으로 필터
-  if (roomId !== activeRoomId) return;
-  const t = new Date(msg.ts).toLocaleTimeString();
-  const who = msg.from === "manager" ? MANAGER_NAME : guestName;
-  addLine(`[${t}] ${who}: ${msg.text}`);
-});
-
-function send() {
-  if (!activeRoomId) return alert("왼쪽에서 방을 선택하세요!");
   const text = (msgEl.value || "").trim();
   if (!text) return;
-  socket.emit("admin:message", { roomId: activeRoomId, text });
+
+  socket.emit("chat:message", {
+    roomId: selectedRoomId,
+    senderName: ADMIN_NAME,
+    message: text,
+    sentAt: new Date().toISOString(),
+  });
+
   msgEl.value = "";
-  // 내가 보낸 것도 서버에서 기록 후 room:message로 내려오게 할 수도 있지만,
-  // 여기서는 즉시 보이게 하고 싶으면 아래처럼 로컬 표시해도 됨.
-  // (중복 방지하려면 서버 이벤트만 쓰는 게 깔끔함)
-  addLine(`[${new Date().toLocaleTimeString()}] ${MANAGER_NAME}: ${text}`);
 }
 
-sendBtn.onclick = send;
+sendBtn.addEventListener("click", sendAdminMessage);
 msgEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") send();
+  if (e.key === "Enter") sendAdminMessage();
 });
-
-endBtn.onclick = () => {
-  if (!activeRoomId) return alert("방을 선택하세요!");
-  socket.emit("admin:end_room", { roomId: activeRoomId });
-  addLine("--- 방 종료 처리됨 ---");
-};
-
-delBtn.onclick = () => {
-  if (!activeRoomId) return alert("방을 선택하세요!");
-  if (!confirm("정말 이 방을 삭제할까요? (기록도 삭제됨)")) return;
-  socket.emit("admin:delete_room", { roomId: activeRoomId });
-  activeRoomId = null;
-  titleEl.textContent = "방을 선택하세요";
-  logEl.textContent = "";
-};

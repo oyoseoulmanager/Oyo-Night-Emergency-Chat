@@ -1,56 +1,82 @@
 const socket = io();
 
 const branchEl = document.getElementById("branch");
-const nickEl = document.getElementById("nickname");
-const enterBtn = document.getElementById("enter");
+const nicknameEl = document.getElementById("nickname");
+const enterBtn = document.getElementById("enterBtn");
 const statusEl = document.getElementById("status");
 const logEl = document.getElementById("log");
 const msgEl = document.getElementById("message");
-const sendBtn = document.getElementById("send");
+const sendBtn = document.getElementById("sendBtn");
 
 let roomId = null;
-let joined = false;
+let entered = false;
 
-function addLine(text) {
-  logEl.textContent += text + "\n";
+function appendLine(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  logEl.appendChild(div);
   logEl.scrollTop = logEl.scrollHeight;
 }
 
-enterBtn.onclick = () => {
+function fmtTime(d) {
+  try {
+    return new Date(d).toLocaleTimeString();
+  } catch {
+    return "";
+  }
+}
+
+enterBtn.addEventListener("click", () => {
   const branch = branchEl.value;
-  const nickname = (nickEl.value || "").trim() || "익명";
+  const nickname = (nicknameEl.value || "").trim() || "Guest";
 
-  socket.emit("guest:join", { branch, nickname });
-};
-
-socket.on("guest:joined", (data) => {
-  roomId = data.roomId;
-  joined = true;
-  statusEl.textContent = `입장 완료 (${data.branch}) / 매니저: ${data.managerName}`;
-  addLine(`--- ${data.managerName}와 1:1 채팅이 시작되었습니다 ---`);
+  socket.emit("join:guest", { branch, nickname });
+  statusEl.textContent = "Connecting...";
 });
 
-function send() {
-  if (!joined) return alert("먼저 입장하세요!");
+socket.on("room:assigned", ({ roomId: rid }) => {
+  roomId = rid;
+  entered = true;
+  statusEl.textContent = "Connected. You are chatting with OYO Night Manager.";
+  appendLine(`[System] Connected. Room created.`);
+});
+
+socket.on("chat:history", (history) => {
+  logEl.innerHTML = "";
+  if (!history || history.length === 0) {
+    appendLine("[System] No previous messages.");
+    return;
+  }
+  history.forEach((m) => {
+    appendLine(`[${fmtTime(m.sentAt)}] ${m.senderName}: ${m.message}`);
+  });
+});
+
+socket.on("chat:message", (m) => {
+  appendLine(`[${fmtTime(m.sentAt)}] ${m.senderName}: ${m.message}`);
+});
+
+function sendMessage() {
+  if (!entered || !roomId) {
+    appendLine("[System] Please click 'Enter Chat' first.");
+    return;
+  }
   const text = (msgEl.value || "").trim();
   if (!text) return;
-  socket.emit("guest:message", { text });
+
+  const nickname = (nicknameEl.value || "").trim() || "Guest";
+
+  socket.emit("chat:message", {
+    roomId,
+    senderName: nickname,
+    message: text,
+    sentAt: new Date().toISOString(),
+  });
+
   msgEl.value = "";
 }
 
-sendBtn.onclick = send;
+sendBtn.addEventListener("click", sendMessage);
 msgEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") send();
-});
-
-socket.on("room:message", ({ msg, guestName, managerName }) => {
-  const t = new Date(msg.ts).toLocaleTimeString();
-  const who = msg.from === "manager" ? managerName : guestName;
-  addLine(`[${t}] ${who}: ${msg.text}`);
-});
-
-socket.on("room:ended", () => {
-  addLine("--- 채팅이 종료되었습니다. ---");
-  statusEl.textContent = "종료됨";
-  joined = false;
+  if (e.key === "Enter") sendMessage();
 });

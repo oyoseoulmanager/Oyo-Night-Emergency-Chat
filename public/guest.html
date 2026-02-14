@@ -1,49 +1,49 @@
-<!doctype html>
-<html lang="ko">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>OYO Guest Chat</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OYO Night Emergency Chat - Guest</title>
   <style>
-    body { font-family: system-ui; max-width: 860px; margin: 40px auto; }
-    #wrap { display: grid; gap: 14px; }
-    .row { display:flex; gap:10px; align-items:center; }
-    select, input { padding: 10px; font-size: 14px; }
-    #log { border:1px solid #ddd; min-height: 420px; padding: 12px; white-space: pre-wrap; }
-    button { padding: 10px 14px; font-size: 14px; cursor: pointer; }
+    body { font-family: system-ui; max-width: 900px; margin: 40px auto; }
+    h1 { margin: 0 0 8px; }
+    .row { display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    select,input,button { padding: 10px; font-size: 16px; }
+    #log { border:1px solid #ccc; height:420px; overflow:auto; padding:12px; white-space:pre-wrap; }
     .muted { color:#666; }
+    .tag { font-size: 12px; padding:2px 8px; border:1px solid #ddd; border-radius:999px; }
   </style>
 </head>
 <body>
-  <h2>OYO Night Emergency Chat (Guest)</h2>
+  <h1>OYO Night Emergency Chat</h1>
+  <div class="muted">Guest portal</div>
 
-  <div id="wrap">
-    <div class="row">
-      <label>지점</label>
-      <select id="branch">
-        <option value="OYO1">OYO1</option>
-        <option value="OYO2">OYO2</option>
-        <option value="OYO3">OYO3</option>
-        <option value="OYODDM">OYODDM</option>
-        <option value="OYOROOFTOP">OYOROOFTOP</option>
-        <option value="OYO6">OYO6</option>
-      </select>
+  <div class="row">
+    <label class="tag">Branch</label>
+    <select id="branch">
+      <option value="OYO1">OYO1</option>
+      <option value="OYO2">OYO2</option>
+      <option value="OYO3">OYO3</option>
+      <option value="OYODDM">OYODDM</option>
+      <option value="OYOROOFTOP">OYOROOFTOP</option>
+      <option value="OYO6">OYO6</option>
+    </select>
 
-      <label>닉네임</label>
-      <input id="nickname" placeholder="닉네임 입력" />
+    <label class="tag">Nickname</label>
+    <input id="nickname" placeholder="Enter your nickname" />
 
-      <button id="enter">입장</button>
-      <span class="muted" id="status"></span>
-    </div>
+    <button id="enterBtn">Enter Chat</button>
+    <span id="status" class="muted">Not connected</span>
+  </div>
 
-    <div id="log"></div>
+  <div id="log"></div>
 
-    <div class="row">
-      <input id="message" style="flex:1" placeholder="메시지 입력 후 Enter" />
-      <button id="send">전송</button>
-    </div>
+  <div class="row" style="margin-top:10px;">
+    <input id="message" style="flex:1;" placeholder="Type a message and press Enter" />
+    <button id="sendBtn">Send</button>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/guest.js"></script>
+  <script src="guest.js"></script>
 </body>
 </html>
