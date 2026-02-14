@@ -1,5 +1,7 @@
 const socket = io();
-
+socket.on("roomAssigned", (data) => {
+  console.log("내 roomId:", data.roomId);
+});
 const log = document.getElementById("log");
 const input = document.getElementById("message");
 const button = document.getElementById("send");

@@ -52,6 +52,9 @@ async function saveMessage({ name, message, time }) {
 }
 
 io.on("connection", async (socket) => {
+  const roomId = socket.id;
+  socket.join(roomId);
+  socket.emit("roomAssigned", { roomId });
   onlineCount++;
   io.emit("presence", { onlineCount });
 
