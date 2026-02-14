@@ -78,15 +78,20 @@ io.on("connection", async (socket) => {
 
 const PORT = process.env.PORT || 3000;
 
+// 서버 실행(딱 1번만)
+function startServer() {
+  server.listen(PORT, () => {
+    console.log(`서버 켜짐: http://localhost:${PORT}`);
+  });
+}
+
+// DB 연결 시도 후, 성공/실패 상관없이 서버는 실행
 initDb()
   .then(() => {
-    server.listen(PORT, () => {
-      console.log(`서버 켜짐: http://localhost:${PORT}`);
-    });
+    console.log("DB 연결 성공!");
+    startServer();
   })
   .catch((e) => {
-    console.error("DB init error:", e.message);
-    server.listen(PORT, () => {
-      console.log(`서버 켜짐: http://localhost:${PORT}`);
-    });
+    console.log("DATABASE URL 없음: DB 저장은 배포 후 활성화됩니다.");
+    startServer();
   });
