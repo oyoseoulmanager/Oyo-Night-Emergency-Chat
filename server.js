@@ -87,6 +87,6 @@ initDb()
   .catch((e) => {
     console.error("DB init error:", e.message);
     server.listen(PORT, () => {
-      console.log(`서버 켜짐(DB 없이): http://localhost:${PORT}`);
+      console.log(`서버 켜짐: http://localhost:${PORT}`);
     });
   });
