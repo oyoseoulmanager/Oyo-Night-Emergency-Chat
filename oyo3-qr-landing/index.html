@@ -26,13 +26,12 @@
     .help { margin-top: 27px; padding: 22px 18px; border: 1px solid #d3e6e8; background: #f5fafb; border-radius: 19px; text-align: left; }
     .help h2 { margin: 0 0 9px; font-size: 19px; line-height: 1.3; color: #173642; }
     .help p { margin: 0 0 15px; color: #526f78; font-size: 14px; line-height: 1.6; }
-    .alt-browser { display: flex; align-items: center; justify-content: center; margin: 0 0 11px; min-height: 66px; border-radius: 15px; padding: 12px; background: #1b697b; color: white; font-size: 16px; font-weight: 800; text-decoration: none; text-align: center; }
-    .alt-browser[hidden] { display: none; }
-    .alt-browser:focus-visible { outline: 3px solid #86cfda; outline-offset: 3px; }
     .copy-button { width: 100%; min-height: 61px; border-radius: 15px; border: 2px solid #246d7d; background: white; color: #205b69; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
     .copy-button:active { transform: translateY(1px); }
     .copy-button:focus-visible { outline: 3px solid #86cfda; outline-offset: 3px; }
-    .help .steps { margin: 15px 0; color: #2e525e; }
+    .help .steps { padding-left: 21px; margin: 17px 0; color: #2e525e; font-size: 14px; line-height: 1.65; }
+    .help .steps li { margin-bottom: 8px; padding-left: 2px; }
+    .help .private-tip { font-size: 12px; color: #68838c; }
     .url-label { display: block; font-size: 12px; font-weight: 700; color: #577781; margin: 0 0 6px; }
     .direct-url { display: block; width: 100%; min-height: 42px; border: 1px solid #c0d8de; background: white; color: #405c65; font: 12px/1.4 monospace; padding: 9px 10px; border-radius: 10px; }
     .help .copy-status { min-height: 21px; margin: 12px 0 0; color: #176c52; font-size: 13px; font-weight: 700; }
@@ -52,12 +51,17 @@
     </a>
 
     <section class="help" aria-labelledby="help-title">
-      <h2 id="help-title">Having trouble opening Pre-Check-In?</h2>
-      <p>If the form shows an error, try opening it in a <strong>different browser app</strong> instead of retrying in the same browser.</p>
-      <a class="alt-browser" id="open-in-chrome" href="intent://script.google.com/macros/s/AKfycbz6HXXlacWFI1oJGIYJvqLmWnJxT3tZwratp7vd51rh1Dgxzj7K5U2jtm45GmAS2KdJzw/exec#Intent;scheme=https;package=com.android.chrome;end" hidden>TRY OPENING IN CHROME (ANDROID) &nearr;</a>
-      <p><strong>Alternative:</strong> Copy the original link below. Open Chrome, Safari, or another browser app and paste the link into its <strong>address bar</strong>, then tap Go / Enter.</p>
-      <button class="copy-button" type="button" id="copy-link">COPY LINK FOR ANOTHER BROWSER</button>
-      <label class="url-label" for="direct-url" style="margin-top:16px">Direct link (tap to select if copying is blocked)</label>
+      <h2 id="help-title">Can't open the Pre-Check-In form?</h2>
+      <p>If you see a Google error page, try using <strong>Chrome Incognito mode</strong>. Opening the link again in the same regular browser may not resolve the issue.</p>
+      <button class="copy-button" type="button" id="copy-link">COPY PRE-CHECK-IN LINK</button>
+      <ol class="steps">
+        <li>Tap <strong>COPY PRE-CHECK-IN LINK</strong> above.</li>
+        <li>Open the <strong>Chrome</strong> app and tap the <strong>three-dot menu (&#8942;)</strong>.</li>
+        <li>Select <strong>New Incognito tab</strong>.</li>
+        <li>Paste the copied link into the <strong>address bar</strong>, then tap Go.</li>
+      </ol>
+      <p class="private-tip">Using an iPhone? Try a private browsing tab if the normal browser does not open the form.</p>
+      <label class="url-label" for="direct-url">Original link (tap to select and copy manually)</label>
       <input class="direct-url" id="direct-url" type="text" readonly spellcheck="false" autocomplete="off" value="https://script.google.com/macros/s/AKfycbz6HXXlacWFI1oJGIYJvqLmWnJxT3tZwratp7vd51rh1Dgxzj7K5U2jtm45GmAS2KdJzw/exec">
       <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
     </section>
@@ -69,8 +73,6 @@
       var button = document.getElementById('copy-link');
       var field = document.getElementById('direct-url');
       var status = document.getElementById('copy-status');
-      var chromeLink = document.getElementById('open-in-chrome');
-      if (/Android/i.test(navigator.userAgent || '')) chromeLink.hidden = false;
       field.addEventListener('click', function () { field.focus(); field.select(); });
       button.addEventListener('click', async function () {
         var copied = false;
@@ -88,7 +90,7 @@
         }
         if (copied) {
           status.removeAttribute('data-error');
-          status.textContent = 'LINK COPIED! Open a DIFFERENT browser app, paste into its address bar, then tap Go.';
+          status.textContent = 'LINK COPIED! Open Chrome > New Incognito tab, paste into the address bar, then tap Go.';
         } else {
           status.setAttribute('data-error', 'true');
           status.textContent = 'Please press and hold the direct link above to copy it manually.';
